@@ -1,0 +1,49 @@
+version: '2'
+
+networks:
+  lokinet:
+    external:
+      name: lokinet
+
+volumes:
+  nextcloud:
+  db:
+
+services:
+  db:
+    image: mariadb 
+    restart: always
+    networks:
+      - lokinet
+    volumes:
+            - /mnt/zfspool/docker/nextcloud/db:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=qazwsx
+      - MYSQL_PASSWORD=qazwsx
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+
+  app:
+    image: nextcloud:fpm
+    networks:
+      - lokinet
+    volumes:
+      - /mnt/zfspool/docker/nextcloud/html:/var/www/html:rw
+      - /mnt/zfspool/docker/nextcloud/html/custom_apps:/var/www/html/custom_apps:rw
+      - /mnt/zfspool/docker/nextcloud/html/config:/var/www/html/config:rw
+      - /mnt/zfspool/docker/nextcloud/html/data:/var/www/html/data:rw
+      - /mnt/zfspool/docker/nextcloud/html/themes:/var/www/html/themes:rw
+    restart: always
+
+  web:
+    image: nginx
+    networks:
+      - lokinet
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/ssl/certs:/etc/ssl/certs/:ro
+      - /etc/ssl/private:/etc/ssl/private:ro
+      - /etc/ssl/:/etc/ssl/:ro
+    volumes_from:
+      - app
+    restart: always
